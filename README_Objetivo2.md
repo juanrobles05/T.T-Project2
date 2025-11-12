@@ -1,7 +1,10 @@
-Proyecto 2 - Objetivo 2
-Estudiantes: Santiago Betancur, Sara Pineda, Juan Diego Robles
-Profesor: Álvaro Enrique Sanjuan
-Materia: ST0263 - Tópicos Especiales en Telemática
+# README - OBJETIVO 2: AUTOESCALAMIENTO Y LOAD BALANCER.
+
+**Estudiante:** Santiago Betancur
+**Colaboradores:** Sara Pineda, Santiago Betancur
+**Profesor:** Álvaro Enrique Ospina Sanjuán
+**Curso:** ST0263 - Tópicos Especiales en Telemática
+**Período:** 2025-2
 
 1.1. Aspectos cumplidos
 Requerimientos Funcionales:

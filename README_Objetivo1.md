@@ -1,4 +1,4 @@
-# 📄 README - OBJETIVO 1: Aplicación Monolítica con Dominio y SSL
+# README - OBJETIVO 1: Aplicación Monolítica con Dominio y SSL
 
 **Estudiante:** Juan Diego Robles de la Ossa
 **Colaboradores:** Sara Pineda, Santiago Betancur

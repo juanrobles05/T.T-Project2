@@ -1,126 +1,137 @@
-# README - OBJETIVO 2: AUTOESCALAMIENTO Y LOAD BALANCER.
+# Proyecto 2 – Objetivo 2: Autoescalamiento y Load Balancer
 
 **Estudiante:** Santiago Betancur  
-**Colaboradores:** Sara Pineda, Santiago Betancur  
+**Colaboradores:** Sara Pineda, Juan Diego Robles  
 **Profesor:** Álvaro Enrique Ospina Sanjuán  
 **Curso:** ST0263 - Tópicos Especiales en Telemática  
-**Período:** 2025-2  
+**Período:** 2025-2
 
-1.1. Aspectos cumplidos
-Requerimientos Funcionales:
+---
 
-Despliegue de aplicación monolítica escalable en AWS:
+## 1. Descripción de la actividad
 
-Instancia EC2 template (bookstore-template) configurada con la aplicación BookStore
-Base de datos MySQL externa con replicación master-slave en EC2 independiente
-Sistema de archivos compartido mediante EFS para uploads
-Proxy inverso NGINX configurado
+Esta actividad consiste en desplegar la aplicación **BookStore** con capacidades de **escalamiento automático** y **balanceo de carga** en AWS. El objetivo principal fue implementar una arquitectura escalable horizontalmente que pueda responder automáticamente a cambios en la demanda, garantizando alta disponibilidad y rendimiento óptimo.
+
+---
+
+## 1.1. Aspectos desarrollados de la actividad
+
+### Requerimientos Funcionales
+
+**Despliegue de aplicación monolítica escalable en AWS:**
+- Instancia EC2 template (`bookstore-template`) configurada con la aplicación BookStore
+- Base de datos MySQL externa con replicación master-slave en EC2 independiente
+- Sistema de archivos compartido mediante EFS para uploads
+- Proxy inverso NGINX configurado
+
+**Patrón de escalamiento implementado:**
+- Application Load Balancer (ALB) con listeners HTTP
+- Target Group con health checks en `/health`
+- Launch Template basado en AMI de `bookstore-template`
+- Auto Scaling Group: mínimo 2 instancias, máximo 4
+- Política de escalamiento por CPU (70% threshold)
+- Certificado SSL configurado con AWS Certificate Manager
+
+**Alta disponibilidad:**
+- Base de datos MySQL con replicación master-slave
+- Múltiples Availability Zones (us-east-1a, us-east-1b)
+- Health checks automáticos en Target Group
+- Reemplazo automático de instancias fallidas
+
+---
+
+## 1.2. Aspectos no desarrollados
+
+- RDS no pudo utilizarse debido a restricciones de AWS Academy (permisos insuficientes). Se implementó alternativa con MySQL en EC2 con replicación manual.
+
+---
 
 
-Patrón de escalamiento implementado:
+---
 
-Application Load Balancer (ALB) con listeners HTTP 
-Target Group con health checks en /health
-Launch Template basado en AMI de bookstore-template
-Auto Scaling Group: mínimo 2 instancias, máximo 4
-Política de escalamiento por CPU (70% threshold)
-Certificado SSL configurado con AWS Certificate Manager
+## 2. Arquitectura de Alto Nivel
 
+### Componentes principales
 
-Alta disponibilidad:
+**Capa de balanceo de carga:**
+- Application Load Balancer en múltiples AZs
+- Listeners HTTP:80 (redirige a HTTPS) y HTTPS:443
+- Target Group con health checks cada 30s
 
-Base de datos MySQL con replicación master-slave
-Múltiples Availability Zones (us-east-1a, us-east-1b)
-Health checks automáticos en Target Group
-Reemplazo automático de instancias fallidas
+**Capa de aplicación:**
+- Auto Scaling Group con 2-4 instancias EC2 t3.small
+- Gunicorn como servidor WSGI (2 workers, 2 threads)
+- NGINX como proxy inverso
+- Docker Compose para gestión de contenedores
 
+**Capa de datos:**
+- MySQL 8.0 en EC2 (master en 172.31.16.23)
+- Réplica MySQL en EC2 secundaria
+- EFS para archivos compartidos (uploads)
 
-D
+**Seguridad:**
+- Security Groups segregados (ALB, App, DB, EFS)
+- Certificado SSL/TLS via ACM
+- Acceso a base de datos solo desde security group de aplicación
 
+### Patrón de arquitectura
 
-
-
-1.2. Aspectos NO cumplidos
-
-RDS no pudo utilizarse debido a restricciones de AWS Academy (permisos insuficientes). Se implementó alternativa con MySQL en EC2 con replicación manual.
-
-
-2. Arquitectura de Alto Nivel
-Componentes principales:
-Capa de balanceo de carga:
-
-Application Load Balancer en múltiples AZs
-Listeners HTTP:80 (redirige a HTTPS) y HTTPS:443
-Target Group con health checks cada 30s
-
-Capa de aplicación:
-
-Auto Scaling Group con 2-4 instancias EC2 t3.small
-Gunicorn como servidor WSGI (2 workers, 2 threads)
-NGINX como proxy inverso
-Docker Compose para gestión de contenedores
-
-Capa de datos:
-
-MySQL 8.0 en EC2 (master en 172.31.16.23)
-Réplica MySQL en EC2 secundaria
-EFS para archivos compartidos (uploads)
-
-Seguridad:
-
-Security Groups segregados (ALB, App, DB, EFS)
-Certificado SSL/TLS via ACM
-Acceso a base de datos solo desde security group de aplicación
-
-Patrón de arquitectura:
 Escalamiento horizontal con balanceador de carga, siguiendo el patrón:
+
+```
 Internet → ALB (HTTPS) → Target Group → ASG (2-4 EC2) → MySQL + EFS
-Mejores prácticas aplicadas:
+```
 
-Separación de capas (presentación, aplicación, datos)
-Infraestructura como código (Launch Template, User Data scripts)
-Health checks multinivel (Docker, ALB, ASG)
-Auto-healing mediante ASG
-Configuración mediante variables de entorno
-Logs centralizados en /var/log/bookstore-startup.log
+### Mejores prácticas aplicadas
+
+- Separación de capas (presentación, aplicación, datos)
+- Infraestructura como código (Launch Template, User Data scripts)
+- Health checks multinivel (Docker, ALB, ASG)
+- Auto-healing mediante ASG
+- Configuración mediante variables de entorno
+- Logs centralizados en `/var/log/bookstore-startup.log`
+
+---
 
 
-3. Ambiente de Desarrollo
-Tecnologías utilizadas:
-Backend:
+## 3. Descripción del ambiente de desarrollo y técnico
 
-Python 3.9
-Flask 2.3.0
-Flask-SQLAlchemy 3.0.5
-Gunicorn 21.2.0 (servidor WSGI de producción)
-PyMySQL 1.1.0
-python-dotenv 1.0.0
+### Tecnologías utilizadas
 
-Base de datos:
+**Backend:**
+- Python 3.9
+- Flask 2.3.0
+- Flask-SQLAlchemy 3.0.5
+- Gunicorn 21.2.0 (servidor WSGI de producción)
+- PyMySQL 1.1.0
+- python-dotenv 1.0.0
 
-MySQL 8.0
-Replicación master-slave
+**Base de datos:**
+- MySQL 8.0
+- Replicación master-slave
 
-Infraestructura:
+**Infraestructura:**
+- Docker 24.x
+- Docker Compose 3.8
+- NGINX 1.24.0
+- Ubuntu 24.04 LTS
 
-Docker 24.x
-Docker Compose 3.8
-NGINX 1.24.0
-Ubuntu 24.04 LTS
+**AWS Services:**
+- EC2 (t3.small instances)
+- EFS (Elastic File System)
+- ALB (Application Load Balancer)
+- Auto Scaling Groups
+- CloudWatch
 
-AWS Services:
+### Configuración del proyecto
 
-EC2 (t3.small instances)
-EFS (Elastic File System)
-ALB (Application Load Balancer)
-Auto Scaling Groups
-CloudWatch
-
-Configuración del proyecto:
-Ruta raíz del proyecto:
+**Ruta raíz del proyecto:**
+```
 /opt/bookstore/proyecto2/BookStore-monolith/
+```
 
-Variables de entorno (.env):
+**Variables de entorno (`.env`):**
+```env
 FLASK_ENV=production
 DB_HOST=172.31.16.23
 DB_PORT=3306
@@ -129,8 +140,11 @@ DB_PASSWORD=bookstore_pass
 DB_NAME=bookstore
 SECRET_KEY=<clave-secreta>
 UPLOAD_FOLDER=/mnt/efs/bookstore/uploads
-docker-compose.yml:
-yamlversion: '3.8'
+```
+
+**docker-compose.yml:**
+```yaml
+version: '3.8'
 
 services:
   flaskapp:
@@ -154,8 +168,11 @@ services:
 networks:
   bookstore_net:
     driver: bridge
-Dockerfile:
-dockerfileFROM python:3.9-slim
+```
+
+**Dockerfile:**
+```dockerfile
+FROM python:3.9-slim
 
 WORKDIR /app
 
@@ -176,8 +193,11 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD curl -f http://localhost:5000/health || exit 1
 
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "2", "--timeout", "60", "--access-logfile", "-", "--error-logfile", "-", "app:app"]
-Configuración NGINX (/etc/nginx/sites-available/bookstore):
-nginxserver {
+```
+
+**Configuración NGINX (`/etc/nginx/sites-available/bookstore`):**
+```nginx
+server {
     listen 80 default_server;
     server_name _;
 
@@ -195,9 +215,11 @@ nginxserver {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
-___________________________________________________________________
-Script de inicio automático (/usr/local/bin/bookstore-startup.sh):
-bash#!/bin/bash
+```
+
+**Script de inicio automático (`/usr/local/bin/bookstore-startup.sh`):**
+```bash
+#!/bin/bash
 exec > >(tee /var/log/bookstore-startup.log)
 exec 2>&1
 
@@ -235,8 +257,12 @@ done
 systemctl restart nginx
 
 echo "$(date): Startup completado"
-Compilación y ejecución:
-bash# Build de la imagen Docker
+```
+
+### Compilación y ejecución
+
+```bash
+# Build de la imagen Docker
 docker-compose build --no-cache
 
 # Iniciar servicios
@@ -247,109 +273,127 @@ docker-compose logs -f
 
 # Verificar health
 curl http://localhost/health
-___________________________________________________________________
+```
 
-4. Ambiente de Producción
-Configuración en AWS:
-Dominio (http): http://bookstore-load-balancer-944350086.us-east-1.elb.amazonaws.com 
-Infraestructura:
+---
 
-Application Load Balancer:
+## 4. Descripción del ambiente de ejecución (en producción)
 
-Scheme: Internet-facing
-Security Group: bookstore-alb-sg
-Listeners: HTTP:80 (redirect), HTTPS:443
-Certificado SSL: Sin certificado para optimizar tiempo en configuración
+### Configuración en AWS
 
-Target Group:
+**Dominio (HTTP):**  
+http://bookstore-load-balancer-944350086.us-east-1.elb.amazonaws.com
 
-Nombre: bookstore-tg
-Protocol: HTTP, Port: 80
-Health check: /health (interval 30s, timeout 5s)
-Healthy threshold: 2, Unhealthy threshold: 3
+### Infraestructura
 
+**Application Load Balancer:**
+- Scheme: Internet-facing
+- Security Group: bookstore-alb-sg
+- Listeners: HTTP:80 (redirect), HTTPS:443
+- Certificado SSL: Sin certificado para optimizar tiempo en configuración
 
-Auto Scaling Group:
+**Target Group:**
+- Nombre: bookstore-tg
+- Protocol: HTTP, Port: 80
+- Health check: /health (interval 30s, timeout 5s)
+- Healthy threshold: 2, Unhealthy threshold: 3
 
-Nombre: bookstore-asg
-Launch Template: bookstore-launch-template
-Min: 2, Desired: 2, Max: 4 instancias
-Instance type: t3.small
-AMI: bookstore-autoscaling-v1
-Availability Zones: us-east-1a, us-east-1b
-Scaling policy: Target tracking CPU 70%
-Health check grace period: 300s
+**Auto Scaling Group:**
+- Nombre: bookstore-asg
+- Launch Template: bookstore-launch-template
+- Min: 2, Desired: 2, Max: 4 instancias
+- Instance type: t3.small
+- AMI: bookstore-autoscaling-v1
+- Availability Zones: us-east-1a, us-east-1b
+- Scaling policy: Target tracking CPU 70%
+- Health check grace period: 300s
 
+**Security Groups:**
 
-Security Groups:
+*bookstore-alb-sg:*
+- Inbound: HTTP (80) y HTTPS (443) desde 0.0.0.0/0
+- Outbound: All traffic
 
-bookstore-alb-sg:
+*bookstore-app-sg:*
+- Inbound: HTTP (80) desde bookstore-alb-sg
 
-Inbound: HTTP (80) y HTTPS (443) desde 0.0.0.0/0
-Outbound: All traffic
+**Base de datos:**
+- MySQL Master: 172.31.16.23:3306
+- MySQL Replica: EC2 secundaria
+- Usuario: bookstore_user
+- Base de datos: bookstore
 
-bookstore-app-sg:
+**EFS:**
+- Mount point: /mnt/efs/bookstore/uploads
+- Security Group: Permite NFS (2049) desde bookstore-app-sg
 
-Inbound: HTTP (80) desde bookstore-alb-sg
+### Parámetros de configuración
 
+Configurados mediante variables de entorno en Launch Template User Data y archivo `.env`.
 
-Base de datos:
+### Lanzamiento del servidor
 
-MySQL Master: 172.31.16.23:3306
-MySQL Replica: EC2 secundaria
-Usuario: bookstore_user
-Base de datos: bookstore
-
-EFS:
-
-Mount point: /mnt/efs/bookstore/uploads
-Security Group: Permite NFS (2049) desde bookstore-app-sg
-
-Parámetros de configuración:
-Configurados mediante variables de entorno en Launch Template User Data y archivo .env.
-Lanzamiento del servidor:
 El servidor se inicia automáticamente mediante:
+- Systemd service: `bookstore.service` (habilitado en boot)
+- User Data script en Launch Template
+- Auto Scaling Group lanza instancias según demanda
 
-Systemd service: bookstore.service (habilitado en boot)
-User Data script en Launch Template
-Auto Scaling Group lanza instancias según demanda
+### Guía de uso para usuarios
 
-Guía de uso para usuarios:
+1. Acceder a http://bookstore-load-balancer-944350086.us-east-1.elb.amazonaws.com
+2. Registrarse como nuevo usuario
+3. Iniciar sesión con credenciales
+4. Explorar catálogo de libros
+5. Publicar libros propios para venta
+6. Realizar compras (simuladas)
 
-Acceder a http://bookstore-load-balancer-944350086.us-east-1.elb.amazonaws.com
-Registrarse como nuevo usuario
-Iniciar sesión con credenciales
-Explorar catálogo de libros
-Publicar libros propios para venta
-Realizar compras (simuladas)
+### Monitoreo
 
-Monitoreo:
+- CloudWatch Metrics: CPU, Network, HealthyHostCount
+- Logs: `/var/log/bookstore-startup.log` en cada instancia
+- ALB Access Logs (opcional)
+- Target Health en Target Group
 
-CloudWatch Metrics: CPU, Network, HealthyHostCount
-Logs: /var/log/bookstore-startup.log en cada instancia
-ALB Access Logs (opcional)
-Target Health en Target Group
+---
 
+## 5. Información adicional y conclusiones
 
-5. Información Relevante
-Decisiones técnicas importantes:
+### Decisiones técnicas importantes
 
-Gunicorn vs Flask dev server: Se utilizó Gunicorn por ser production-ready, soportar múltiples workers y mejor rendimiento bajo carga.
-EFS vs EBS: EFS permite compartir archivos entre múltiples instancias del ASG, requisito para archivos de uploads.
-MySQL en EC2 vs RDS: Por limitaciones de AWS Academy, se implementó MySQL en EC2 con replicación manual. RDS hubiera sido preferible por gestión automatizada.
-Health checks multinivel: Docker healthcheck, NGINX endpoint y ALB target health para máxima confiabilidad.
+- **Gunicorn vs Flask dev server:** Se utilizó Gunicorn por ser production-ready, soportar múltiples workers y mejor rendimiento bajo carga.
+- **EFS vs EBS:** EFS permite compartir archivos entre múltiples instancias del ASG, requisito para archivos de uploads.
+- **MySQL en EC2 vs RDS:** Por limitaciones de AWS Academy, se implementó MySQL en EC2 con replicación manual. RDS hubiera sido preferible por gestión automatizada.
+- **Health checks multinivel:** Docker healthcheck, NGINX endpoint y ALB target health para máxima confiabilidad.
 
-Limitaciones conocidas:
+### Limitaciones conocidas
 
-EFS mount puede fallar si Security Groups no están correctamente configurados
-Credenciales en AWS Academy expiran después de 4 horas de sesión
-Replicación de MySQL es manual, no automática como en RDS
+- EFS mount puede fallar si Security Groups no están correctamente configurados
+- Credenciales en AWS Academy expiran después de 4 horas de sesión
+- Replicación de MySQL es manual, no automática como en RDS
 
-Referencias:
+### Conclusión
 
-Documentación oficial de Flask: https://flask.palletsprojects.com/
-AWS Auto Scaling documentation: https://docs.aws.amazon.com/autoscaling/
-Gunicorn deployment: https://docs.gunicorn.org/
-Docker Compose reference: https://docs.docker.com/compose/
-NGINX reverse proxy: https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/
-Repositorio base del proyecto: https://github.com/st0263eafit/st0263-252/tree/main/proyecto2
+El despliegue de la aplicación BookStore con Auto Scaling y Load Balancer permitió:
+
+- Implementar escalamiento horizontal automático basado en métricas de CPU
+- Garantizar alta disponibilidad mediante múltiples Availability Zones
+- Distribuir la carga de manera eficiente con Application Load Balancer
+- Mantener persistencia de datos compartidos mediante EFS
+- Aplicar health checks multinivel para máxima confiabilidad
+- Demostrar competencias en arquitecturas cloud escalables
+
+**Conclusión:**
+
+La práctica permitió demostrar el conocimiento técnico en la implementación de arquitecturas escalables y de alta disponibilidad en AWS, aplicando patrones de escalamiento horizontal, balanceo de carga y auto-healing, elementos fundamentales para sistemas productivos modernos.
+
+---
+
+## 6. Referencias
+
+- Documentación oficial de Flask: https://flask.palletsprojects.com/
+- AWS Auto Scaling documentation: https://docs.aws.amazon.com/autoscaling/
+- Gunicorn deployment: https://docs.gunicorn.org/
+- Docker Compose reference: https://docs.docker.com/compose/
+- NGINX reverse proxy: https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/
+- Repositorio base del proyecto: https://github.com/st0263eafit/st0263-252/tree/main/proyecto2
+- Curso ST0263 - EAFIT

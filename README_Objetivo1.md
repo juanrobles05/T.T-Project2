@@ -1,10 +1,10 @@
 # README - OBJETIVO 1: Aplicación Monolítica con Dominio y SSL
 
-**Estudiante:** Juan Diego Robles de la Ossa
-**Colaboradores:** Sara Pineda, Santiago Betancur
-**Profesor:** Álvaro Enrique Ospina Sanjuán
-**Curso:** ST0263 - Tópicos Especiales en Telemática
-**Período:** 2025-2
+**Estudiante:** Juan Diego Robles de la Ossa  
+**Colaboradores:** Sara Pineda, Santiago Betancur  
+**Profesor:** Álvaro Enrique Ospina Sanjuán  
+**Curso:** ST0263 - Tópicos Especiales en Telemática  
+**Período:** 2025-2  
 
 ---
 

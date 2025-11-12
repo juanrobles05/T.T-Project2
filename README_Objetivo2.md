@@ -1,10 +1,10 @@
 # README - OBJETIVO 2: AUTOESCALAMIENTO Y LOAD BALANCER.
 
-**Estudiante:** Santiago Betancur
-**Colaboradores:** Sara Pineda, Santiago Betancur
-**Profesor:** Álvaro Enrique Ospina Sanjuán
-**Curso:** ST0263 - Tópicos Especiales en Telemática
-**Período:** 2025-2
+**Estudiante:** Santiago Betancur  
+**Colaboradores:** Sara Pineda, Santiago Betancur  
+**Profesor:** Álvaro Enrique Ospina Sanjuán  
+**Curso:** ST0263 - Tópicos Especiales en Telemática  
+**Período:** 2025-2  
 
 1.1. Aspectos cumplidos
 Requerimientos Funcionales:
